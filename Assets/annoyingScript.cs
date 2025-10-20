@@ -1,6 +1,9 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using KModkit;
 
-public class script : MonoBehaviour {
+public class annoyingScript : MonoBehaviour {
 
     public KMSelectable[] buttons = new KMSelectable[25];
     public TextMesh[] texts = new TextMesh[25];
@@ -151,5 +154,33 @@ public class script : MonoBehaviour {
         buttons[24].OnInteract += delegate () { return Press(24); };
         randomize();
         moduleMesh.material = materials[0];
+    }
+
+#pragma warning disable 414
+    private readonly string TwitchHelpMessage =
+        @"Use !{0} press # to press button on this position. Buttons are numbered 0-24 in reading order.";
+    private bool TwitchPlaysActive = false;
+#pragma warning restore 414
+
+    IEnumerator ProcessTwitchCommand(string Command)
+    {
+        Command = Command.ToLower();
+        if (!Command.RegexMatch("press ([0-9])+")) yield return "sendtochaterror Invalid command!";
+        else {
+            int? num = Command.Substring(6).TryParseInt();
+            if (num == null || num<0 || num>24) yield return "sendtochaterror Invalid command!";
+            else Press((int)num);
+        }
+        yield return null;
+    }
+
+    IEnumerator TwitchHandleForcedSolve()
+    {
+        while (!SOLVED)
+        {
+            Press(getMin());
+            yield return new WaitForSeconds(0.05f);
+        }
+        yield return null;
     }
 }
